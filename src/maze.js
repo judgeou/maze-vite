@@ -22,15 +22,15 @@ function isSamePoint (p1, p2) {
   return p1[0] === p2[0] && p1[1] === p2[1]
 }
 
-function solveMaze (matrix, start, end) {
+function solveMaze (matrix, begin, end) {
   let path = []
 
   // 当前点
-  let current = start
+  let current = begin
   path.push(current)
 
   // 上次走过的路
-  let lastPoint = start
+  let lastPoint = begin
 
   // 随便挑一个可以走的点
   while (1) {
@@ -46,17 +46,6 @@ function solveMaze (matrix, start, end) {
   }
   return path
 }
-
-const m = [
-  [1, 1, 0, 0, 0],
-  [0, 1, 1, 1, 0],
-  [0, 0, 0, 1, 0],
-  [0, 0, 0, 1, 1]
-]
-
-console.log(
-  solveMaze(m, [0, 0], [3, 4])
-)
 
 export {
   solveMaze
