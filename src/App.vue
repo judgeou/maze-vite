@@ -3,10 +3,10 @@
     <div class="div-matrix">
       <div v-for="(row, x) in matrix" :key="x">
         <div class="cell" 
-          :class="{ black: p <= 0, path: isPath(x, y) }"
+          :class="{ black: p <= 0, path: isPath(x, y), queue: isQueue(x, y) }"
           v-for="(p, y) in row" :key="y" :style="{ left: `${y * 2.5}em`, top: `${x * 2.5}em` }">
-          {{ begin[0] === x && begin[1] === y ? 'B' : '' }}
-          {{ end[0] === x && end[1] === y ? 'E' : '' }}
+
+          {{ isCurrent(x, y) ? '😋' : '' }}
         </div>
       </div>
     </div>
@@ -22,23 +22,35 @@ export default {
       begin: [0, 0],
       end: [3, 4],
       matrix: [],
-      paths: []
+      paths: [],
+      queue: [],
+      current: [0, 0]
     }
   },
   methods: {
     isPath (x, y) {
       const p = this.paths.find(path => path[0] === x && path[1] === y)
       return p
+    },
+    isCurrent (x, y) {
+      return this.current.x === x && this.current.y === y
+    },
+    isQueue (x, y) {
+      return this.queue.find(node => node.x === x && node.y === y)
     }
   },
-  created () {
+  async created () {
+    let vm = this
     const m = this.matrix = [
       [1, 1, 0, 0, 0],
-      [0, 1, 1, 1, 0],
-      [0, 0, 0, 1, 0],
-      [0, 0, 0, 1, 1]
+      [1, 1, 1, 1, 1],
+      [0, 1, 0, 1, 0],
+      [0, 1, 0, 1, 1]
     ]
-    this.paths = solveMaze(m, this.begin, this.end)
+    this.paths = await solveMaze(m, this.begin, this.end, (current, queue) => {
+      vm.current = current
+      vm.queue = queue
+    })
   }
 }
 </script>
@@ -62,5 +74,8 @@ export default {
 }
 .black {
   background: black;
+}
+.cell.queue {
+  border: 2px blue solid;
 }
 </style>
