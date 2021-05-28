@@ -22,6 +22,8 @@ export default {
       begin: [0, 0],
       end: [3, 4],
       matrix: [],
+      width: 0,
+      height: 0,
       paths: [],
       queue: [],
       current: [0, 0]
@@ -42,12 +44,14 @@ export default {
   async created () {
     let vm = this
     const m = this.matrix = [
-      [1, 1, 0, 0, 0],
-      [1, 1, 1, 1, 1],
-      [0, 1, 0, 1, 0],
-      [0, 1, 0, 1, 1]
+      1, 1, 0, 0, 0,
+      1, 1, 1, 1, 1,
+      0, 1, 0, 1, 0,
+      0, 1, 0, 1, 1
     ]
-    this.paths = await solveMaze(m, this.begin, this.end, (current, queue) => {
+    const width = this.width = 5
+    const height = this.height = 4
+    this.paths = await solveMaze(m, width, height, this.begin, this.end, (current, queue) => {
       vm.current = current
       vm.queue = queue
     })
