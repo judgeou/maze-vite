@@ -6,7 +6,7 @@
         :class="{ black: node.value <= 0, path: isPath(i), queue: queue.indexOf(node) >= 0 }"
         :style="cellStyle(i)">
 
-        {{ node === current ? '😋' : '' }}
+        {{ node === current ? '🧍' : '' }}
       </div>
     </div>
   </div>
