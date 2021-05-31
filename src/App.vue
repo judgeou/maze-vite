@@ -1,13 +1,12 @@
 <template>
   <div>
     <div class="div-matrix">
-      <div v-for="(row, x) in matrix" :key="x">
-        <div class="cell" 
-          :class="{ black: p <= 0, path: isPath(x, y), queue: isQueue(x, y) }"
-          v-for="(p, y) in row" :key="y" :style="{ left: `${y * 2.5}em`, top: `${x * 2.5}em` }">
+      <div class="cell"
+        v-for="(node, i) in nodes" :key="i"
+        :class="{ black: node.value <= 0, path: isPath(i), queue: queue.indexOf(node) >= 0 }"
+        :style="cellStyle(i)">
 
-          {{ isCurrent(x, y) ? '😋' : '' }}
-        </div>
+        {{ node === current ? '😋' : '' }}
       </div>
     </div>
   </div>
@@ -21,29 +20,31 @@ export default {
     return {
       begin: [0, 0],
       end: [3, 4],
-      matrix: [],
+      nodes: [],
       width: 0,
       height: 0,
       paths: [],
       queue: [],
-      current: [0, 0]
+      current: null
     }
   },
   methods: {
     isPath (x, y) {
-      const p = this.paths.find(path => path[0] === x && path[1] === y)
-      return p
+
     },
-    isCurrent (x, y) {
-      return this.current.x === x && this.current.y === y
+    indexToPos (i) {
+      let y = i % this.width
+      let x = Math.floor(i / this.width)
+      return { x, y }
     },
-    isQueue (x, y) {
-      return this.queue.find(node => node.x === x && node.y === y)
+    cellStyle (i) {
+      let { x, y } = this.indexToPos(i)
+      return { left: `${y * 2.5}em`, top: `${x * 2.5}em` }
     }
   },
   async created () {
     let vm = this
-    const m = this.matrix = [
+    const m = [
       1, 1, 0, 0, 0,
       1, 1, 1, 1, 1,
       0, 1, 0, 1, 0,
@@ -51,9 +52,10 @@ export default {
     ]
     const width = this.width = 5
     const height = this.height = 4
-    this.paths = await solveMaze(m, width, height, this.begin, this.end, (current, queue) => {
+    this.paths = await solveMaze(m, width, height, this.begin, this.end, (nodes, current, queue) => {
       vm.current = current
       vm.queue = queue
+      vm.nodes = nodes
     })
   }
 }
