@@ -4,6 +4,7 @@ class Node {
     this.y = y
     this.value = value
     this.checked = false
+    this.parent = null
     this.nearNodes = []
   }
 }
@@ -54,7 +55,19 @@ function sleep (ms) {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
 
-async function solveMaze (matrix, width, height, begin, end, cb = (nodes, current, queue) => {}) {
+function buildPath (endNode) {
+  let path = []
+  let node = endNode
+
+  while (node) {
+    path.push(node)
+    node = node.parent
+  }
+
+  return path
+}
+
+async function solveMaze (matrix, width, height, begin, end, cb = (nodes, current, queue, path) => {}) {
   let path = []
   let nodeGraph = new NodeGraph(matrix, width, height)
   nodeGraph.buildNodeGraph()
@@ -74,11 +87,13 @@ async function solveMaze (matrix, width, height, begin, end, cb = (nodes, curren
 
     for (let node of current.nearNodes) {
       if (node.checked === false) {
+        node.parent = current
         queue.push(node)
       }
     }
 
-    cb(nodeGraph.nodes, current, queue)
+    path = buildPath(current)
+    cb(nodeGraph.nodes, current, queue, path)
     await sleep(1000)
   }
 

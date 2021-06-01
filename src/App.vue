@@ -3,7 +3,7 @@
     <div class="div-matrix">
       <div class="cell"
         v-for="(node, i) in nodes" :key="i"
-        :class="{ black: node.value <= 0, path: isPath(i), queue: queue.indexOf(node) >= 0 }"
+        :class="{ black: node.value <= 0, path: path.indexOf(node) >= 0, queue: queue.indexOf(node) >= 0 }"
         :style="cellStyle(i)">
 
         {{ node === current ? '🧍' : '' }}
@@ -23,15 +23,12 @@ export default {
       nodes: [],
       width: 0,
       height: 0,
-      paths: [],
+      path: [],
       queue: [],
       current: null
     }
   },
   methods: {
-    isPath (x, y) {
-
-    },
     indexToPos (i) {
       let y = i % this.width
       let x = Math.floor(i / this.width)
@@ -52,10 +49,11 @@ export default {
     ]
     const width = this.width = 5
     const height = this.height = 4
-    this.paths = await solveMaze(m, width, height, this.begin, this.end, (nodes, current, queue) => {
+    this.paths = await solveMaze(m, width, height, this.begin, this.end, (nodes, current, queue, path) => {
       vm.current = current
       vm.queue = queue
       vm.nodes = nodes
+      vm.path = path
     })
   }
 }
