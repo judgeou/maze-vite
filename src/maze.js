@@ -49,8 +49,8 @@ class NodeGraph {
   }
 
   getNode (x, y) {
-    let { nodes, width, matrix } = this
-    if (x >= 0 && y >= 0) {
+    let { nodes, width, height, matrix } = this
+    if (x >= 0 && y >= 0 && x < width && y < height) {
       let node = nodes[y * width + x]
       if (!node) {
         let value = matrix[y * width + x]
@@ -123,6 +123,7 @@ async function solveMaze (matrix, width, height, begin, end, cb = () => {}) {
     for (let node of current.nearNodes) {
       if (node.checked === false && node.value) {
         node.parent = current
+        node.checked = true
         nodeGraph.queue.push(node)
       }
     }
