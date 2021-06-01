@@ -2,11 +2,14 @@
   <div>
     <div class="div-matrix">
       <div class="cell"
-        v-for="(node, i) in nodes" :key="i"
-        :class="{ black: node.value <= 0, path: path.indexOf(node) >= 0, queue: queue.indexOf(node) >= 0 }"
-        :style="cellStyle(i)">
+        v-for="(node, i) in nodeGraph.nodes" :key="i"
+        :class="{ black: node.value <= 0, path: path.indexOf(node) >= 0, queue: nodeGraph.queue.indexOf(node) >= 0 }"
+        :style="cellStyle(i)"
+        @click="onCellClick($event, node)">
 
         {{ node === current ? '🧍' : '' }}
+        {{ node === nodeGraph.beginNode ? '🏳️' : ''}}
+        {{ node === nodeGraph.endNode ? '🚩' : '' }}
       </div>
     </div>
   </div>
@@ -18,13 +21,10 @@ import { solveMaze } from './maze'
 export default {
   data () {
     return {
-      begin: [0, 0],
-      end: [3, 4],
-      nodes: [],
+      nodeGraph: null,
       width: 0,
       height: 0,
       path: [],
-      queue: [],
       current: null
     }
   },
@@ -37,30 +37,47 @@ export default {
     cellStyle (i) {
       let { x, y } = this.indexToPos(i)
       return { left: `${y * 2.5}em`, top: `${x * 2.5}em` }
+    },
+    async reload (m) {
+      let vm = this
+      let { width, height } = vm
+      let begin = [0, 0]
+      let end = [4, 3]
+      await solveMaze(m, width, height, begin, end, (nodeGraph, current, path) => {
+        vm.current = current
+        vm.nodeGraph = nodeGraph
+        vm.path = path
+      })
+    },
+    onCellClick ($event, node) {
+      if ($event.altKey) {
+        this.nodeGraph.setEndNode(node)
+      } else if ($event.ctrlKey) {
+
+      } else {
+        this.nodeGraph.switchNodeValue(node)
+      }
     }
   },
   async created () {
     let vm = this
     const m = [
-      1, 1, 0, 0, 0,
-      1, 1, 1, 1, 1,
-      0, 1, 0, 1, 0,
-      0, 1, 0, 1, 1
+      1, 1, 0, 0, 0, 1, 1,
+      1, 1, 1, 1, 1, 1, 1,
+      0, 1, 0, 1, 0, 1, 0,
+      0, 1, 0, 1, 1, 1, 0,
+      0, 1, 1, 0, 1, 1, 1,
+      0, 1, 0, 0, 1, 1, 1,
     ]
-    const width = this.width = 5
-    const height = this.height = 4
-    this.paths = await solveMaze(m, width, height, this.begin, this.end, (nodes, current, queue, path) => {
-      vm.current = current
-      vm.queue = queue
-      vm.nodes = nodes
-      vm.path = path
-    })
+    this.width = 7
+    this.height = 6
+    this.reload(m)
   }
 }
 </script>
 
 <style>
-.top {
+.row {
   margin-bottom: 1em;
 }
 .div-matrix {

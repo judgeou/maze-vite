@@ -10,25 +10,40 @@ class Node {
 }
 
 class NodeGraph {
-  constructor (matrix, width, height) {
+  constructor (matrix, width, height, beginPos, endPos) {
     this.nodes = []
     this.matrix = matrix
     this.width = width
     this.height = height
+
+    this.queue = []
+    this.current = null
+    
+    this.beginPos = beginPos
+    this.beginNode = null
+    this.endPos = endPos
+    this.endNode = null
   }
 
   buildNodeGraph () {
-    let { width, height } = this
+    let { width, height, beginPos, endPos } = this
     
     for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {
         let node = this.getNode(x, y)
-  
+
+        if (x === beginPos[0] && y === beginPos[1]) {
+          this.beginNode = node
+        }
+        if (x === endPos[0] && y === endPos[1]) {
+          this.endNode = node
+        }
+
         let up = this.getNode(x, y - 1)
         let down = this.getNode(x, y + 1)
         let left = this.getNode(x - 1, y)
         let right = this.getNode(x + 1, y)
-        node.nearNodes = [ up, down, left, right].filter(node => node && node.value === 1)
+        node.nearNodes = [ up, down, left, right].filter(node => node)
       }
     }
   }
@@ -49,6 +64,19 @@ class NodeGraph {
       return null
     }
   }
+
+  switchNodeValue (node) {
+    node.value = !node.value
+  }
+
+  setEndNode (node) {
+    for (let node of this.nodes) {
+      node.checked = false
+      node.parent = null
+    }
+    this.queue = this.current.nearNodes.filter(node => node.value)
+    this.endNode = node
+  }
 }
 
 function sleep (ms) {
@@ -67,34 +95,39 @@ function buildPath (endNode) {
   return path
 }
 
-async function solveMaze (matrix, width, height, begin, end, cb = (nodes, current, queue, path) => {}) {
+function equalsNode (a, b) {
+  return a.x === b.x && a.y === b.y
+}
+
+async function solveMaze (matrix, width, height, begin, end, cb = () => {}) {
   let path = []
-  let nodeGraph = new NodeGraph(matrix, width, height)
+  let nodeGraph = new NodeGraph(matrix, width, height, begin, end)
   nodeGraph.buildNodeGraph()
 
-  let beginNode = nodeGraph.getNode(begin[0], begin[1])
-  let endNode = nodeGraph.getNode(end[0], end[1])
+  nodeGraph.queue = [ nodeGraph.beginNode ]
 
-  let queue = [ beginNode ]
-
-  while (queue.length && queue.length) {
-    let current = queue.shift()
+  while (nodeGraph.queue.length) {
+    let current = nodeGraph.current = nodeGraph.queue.shift()
     current.checked = true
 
-    if (current === endNode) {
-      break
+    path = buildPath(current)
+    cb(nodeGraph, current, path)
+
+    if (equalsNode(current, nodeGraph.endNode)) {
+      while (equalsNode(current, nodeGraph.endNode)) {
+        await sleep(1000)
+      }
+      continue
     }
 
     for (let node of current.nearNodes) {
-      if (node.checked === false) {
+      if (node.checked === false && node.value) {
         node.parent = current
-        queue.push(node)
+        nodeGraph.queue.push(node)
       }
     }
 
-    path = buildPath(current)
-    cb(nodeGraph.nodes, current, queue, path)
-    await sleep(1000)
+    await sleep(500)
   }
 
   return path
