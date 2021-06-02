@@ -3,6 +3,7 @@ class Node {
     this.x = x
     this.y = y
     this.value = value
+    this.endDistance = 0
     this.checked = false
     this.parent = null
     this.nearNodes = []
@@ -65,6 +66,24 @@ class NodeGraph {
     }
   }
 
+  popBestNextNode () {
+    let { queue } = this
+    let bestNode = queue[0]
+    let bestNodeIndex = 0
+    let { length } = queue
+
+    for (let i = 0; i < length; i++) {
+      let node = queue[i]
+      if (node.endDistance < bestNode.endDistance) {
+        bestNode = node
+        bestNodeIndex = i
+      }
+    }
+
+    queue.splice(bestNodeIndex, 1)
+    return bestNode
+  }
+
   switchNodeValue (node) {
     node.value = !node.value
   }
@@ -99,15 +118,21 @@ function equalsNode (a, b) {
   return a.x === b.x && a.y === b.y
 }
 
+function getDistance (nodeA, nodeB) {
+  const x = Math.abs(nodeB.x - nodeA.x)
+  const y = Math.abs(nodeB.y - nodeA.y)
+  return (x + y)
+}
+
 async function solveMaze (matrix, width, height, begin, end, cb = () => {}) {
   let path = []
   let nodeGraph = new NodeGraph(matrix, width, height, begin, end)
   nodeGraph.buildNodeGraph()
-
+  
   nodeGraph.queue = [ nodeGraph.beginNode ]
 
   while (nodeGraph.queue.length) {
-    let current = nodeGraph.current = nodeGraph.queue.shift()
+    let current = nodeGraph.current = nodeGraph.popBestNextNode()
     current.checked = true
 
     path = buildPath(current)
@@ -117,6 +142,7 @@ async function solveMaze (matrix, width, height, begin, end, cb = () => {}) {
       while (equalsNode(current, nodeGraph.endNode)) {
         await sleep(1000)
       }
+      nodeGraph.queue = [ current ]
       continue
     }
 
@@ -124,6 +150,7 @@ async function solveMaze (matrix, width, height, begin, end, cb = () => {}) {
       if (node.checked === false && node.value) {
         node.parent = current
         node.checked = true
+        node.endDistance = getDistance(node, nodeGraph.endNode)
         nodeGraph.queue.push(node)
       }
     }
