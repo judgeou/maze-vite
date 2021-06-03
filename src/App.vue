@@ -41,8 +41,8 @@ export default {
     async reload (m) {
       let vm = this
       let { width, height } = vm
-      let begin = [0, 0]
-      let end = [4, 3]
+      let begin = [9, 0]
+      let end = [0, 0]
       await solveMaze(m, width, height, begin, end, (nodeGraph, current, path) => {
         vm.current = current
         vm.nodeGraph = nodeGraph
@@ -60,13 +60,10 @@ export default {
     }
   },
   async created () {
-    let vm = this
+    let vm = window.vm = this
     this.width = 10
     this.height = 10
-    let m = []
-    for (let i = 0; i < this.width * this.height; i++) {
-      m.push(1)
-    }
+    let m = [1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
     this.reload(m)
   }
 }
