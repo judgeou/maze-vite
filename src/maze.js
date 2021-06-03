@@ -3,6 +3,8 @@ class Node {
     this.x = x
     this.y = y
     this.value = value
+    this.cost = 0
+    this.beginDistance = 0
     this.endDistance = 0
     this.checked = false
     this.parent = null
@@ -74,7 +76,7 @@ class NodeGraph {
 
     for (let i = 0; i < length; i++) {
       let node = queue[i]
-      if (node.endDistance < bestNode.endDistance) {
+      if (node.cost < bestNode.cost) {
         bestNode = node
         bestNodeIndex = i
       }
@@ -143,6 +145,7 @@ async function solveMaze (matrix, width, height, begin, end, cb = () => {}) {
         await sleep(1000)
       }
       nodeGraph.queue = [ current ]
+      nodeGraph.beginNode = current
       continue
     }
 
@@ -151,6 +154,8 @@ async function solveMaze (matrix, width, height, begin, end, cb = () => {}) {
         node.parent = current
         node.checked = true
         node.endDistance = getDistance(node, nodeGraph.endNode)
+        node.beginDistance = current.beginDistance + 1
+        node.cost = node.endDistance + node.beginDistance
         nodeGraph.queue.push(node)
       }
     }

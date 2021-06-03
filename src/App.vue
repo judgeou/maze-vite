@@ -61,16 +61,12 @@ export default {
   },
   async created () {
     let vm = this
-    const m = [
-      1, 1, 0, 0, 0, 1, 1,
-      1, 1, 1, 1, 1, 1, 1,
-      0, 1, 0, 1, 0, 1, 0,
-      0, 1, 0, 1, 1, 1, 0,
-      0, 1, 1, 0, 1, 1, 1,
-      0, 1, 0, 0, 1, 1, 1,
-    ]
-    this.width = 7
-    this.height = 6
+    this.width = 10
+    this.height = 10
+    let m = []
+    for (let i = 0; i < this.width * this.height; i++) {
+      m.push(1)
+    }
     this.reload(m)
   }
 }
