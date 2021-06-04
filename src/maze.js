@@ -160,7 +160,7 @@ async function solveMaze (matrix, width, height, begin, end, cb = () => {}) {
       }
     }
 
-    await sleep(500)
+    await sleep(0)
   }
 
   return path

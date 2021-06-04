@@ -1,17 +1,15 @@
 <template>
   <div>
-    <div class="div-matrix">
-      <div class="cell"
-        v-for="(node, i) in nodeGraph.nodes" :key="i"
-        :class="{ black: node.value <= 0, path: path.indexOf(node) >= 0, queue: nodeGraph.queue.indexOf(node) >= 0 }"
-        :style="cellStyle(i)"
-        @click="onCellClick($event, node)">
-
-        {{ node === current ? '🧍' : '' }}
-        {{ node === nodeGraph.beginNode ? '🏳️' : ''}}
-        {{ node === nodeGraph.endNode ? '🚩' : '' }}
-      </div>
+    <div>
+      <input type="file" accept="image/*" @change="onFile">
     </div>
+
+    <div class="maze-view">
+      <canvas style="z-index: 0" ref="canvas"></canvas>
+      <canvas style="z-index: 1" ref="canvasChecked"></canvas>
+      <canvas style="z-index: 2" ref="canvasPath"></canvas>
+    </div>
+
   </div>
 </template>
 
@@ -21,7 +19,7 @@ import { solveMaze } from './maze'
 export default {
   data () {
     return {
-      nodeGraph: null,
+      nodeGraph: {},
       width: 0,
       height: 0,
       path: [],
@@ -29,6 +27,33 @@ export default {
     }
   },
   methods: {
+    onFile ({ target }) {
+      let vm = this
+      let { files } = target
+      if (files.length) {
+        let url = URL.createObjectURL(files[0])
+        let image = new Image()
+        image.src = url
+        
+        image.onload = () => {
+          let { canvas, canvasChecked, canvasPath } = vm.$refs
+          let width = canvas.width = vm.width = image.width
+          let height = canvas.height = vm.height = image.height
+          canvasPath.width = canvasChecked.width = width
+          canvasPath.height = canvasChecked.height = height
+
+          let ctx = canvas.getContext('2d')
+          ctx.drawImage(image, 0, 0, width, height)
+          
+          let imgData = ctx.getImageData(0, 0, width, height)
+          let rgbaArray = new Int32Array(imgData.data.buffer)
+          let m = rgbaArray.map(item => item === -1 ? 1 : 0) // -1 可以理解为 rgba(255,255,255,255)，即为白色
+          vm.reload(m, [35,9], [243,235])
+          
+          URL.revokeObjectURL(url)
+        }
+      }
+    },
     indexToPos (i) {
       let y = i % this.width
       let x = Math.floor(i / this.width)
@@ -36,17 +61,23 @@ export default {
     },
     cellStyle (i) {
       let { x, y } = this.indexToPos(i)
-      return { left: `${y * 2.5}em`, top: `${x * 2.5}em` }
+      return { left: `${y * 1.25}em`, top: `${x * 1.25}em` }
     },
-    async reload (m) {
+    async reload (m, begin, end) {
       let vm = this
       let { width, height } = vm
-      let begin = [9, 0]
-      let end = [0, 0]
+      let { canvasChecked, canvasPath } = vm.$refs
       await solveMaze(m, width, height, begin, end, (nodeGraph, current, path) => {
-        vm.current = current
-        vm.nodeGraph = nodeGraph
-        vm.path = path
+        let ctxChecked = canvasChecked.getContext('2d')
+        ctxChecked.fillStyle = "#74b9ff"
+        ctxChecked.fillRect(current.x, current.y, 1, 1)
+
+        let ctxPath = canvasPath.getContext('2d')
+        ctxPath.clearRect(0, 0, canvasPath.width, canvasPath.height)
+        ctxPath.fillStyle = '#FF0000'
+        for (let node of path) {
+          ctxPath.fillRect(node.x, node.y, 1, 1)
+        }
       })
     },
     onCellClick ($event, node) {
@@ -60,11 +91,7 @@ export default {
     }
   },
   async created () {
-    let vm = window.vm = this
-    this.width = 10
-    this.height = 10
-    let m = [1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-    this.reload(m)
+
   }
 }
 </script>
@@ -73,23 +100,10 @@ export default {
 .row {
   margin-bottom: 1em;
 }
-.div-matrix {
+.maze-view {
   position: relative;
 }
-.cell {
-  border: 1px black solid;
-  width: 2em;
-  height: 2em;
-  position:absolute;
-  text-align: center;
-}
-.cell.path {
-  border: 1px red solid;
-}
-.black {
-  background: black;
-}
-.cell.queue {
-  border: 2px blue solid;
+.maze-view canvas {
+  position: absolute;
 }
 </style>
