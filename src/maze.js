@@ -138,9 +138,11 @@ async function solveMaze (matrix, width, height, begin, end, cb = () => {}) {
     current.checked = true
 
     path = buildPath(current)
-    cb(nodeGraph, current, path)
+    let exit = await cb(nodeGraph, current, path, false)
+    if (exit) { return }
 
     if (equalsNode(current, nodeGraph.endNode)) {
+      await cb(nodeGraph, current, path, true)
       while (equalsNode(current, nodeGraph.endNode)) {
         await sleep(1000)
       }
@@ -159,8 +161,6 @@ async function solveMaze (matrix, width, height, begin, end, cb = () => {}) {
         nodeGraph.queue.push(node)
       }
     }
-
-    await sleep(0)
   }
 
   return path
