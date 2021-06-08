@@ -18,6 +18,7 @@
 
 <script>
 import { solveMaze } from './maze'
+import defaultMazeImg from './assets/maze1.png'
 
 async function waitFrame () {
   return new Promise((resolve) => requestAnimationFrame(resolve))
@@ -145,7 +146,7 @@ export default {
     }
   },
   async created () {
-    this.loadImage('/maze1.png')
+    this.loadImage(defaultMazeImg)
   }
 }
 </script>
