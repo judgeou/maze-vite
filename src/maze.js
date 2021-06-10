@@ -125,6 +125,11 @@ function getDistance (nodeA, nodeB) {
   return (x + y)
 }
 
+/**
+ * 获取 Node 的 RGB 值
+ * @param {Node} node 
+ * @returns 
+ */
 function getNodeRGB (node) {
   let { value } = node
   let r = value & 0xFF
@@ -133,6 +138,12 @@ function getNodeRGB (node) {
   return [ r, g, b ]
 }
 
+/**
+ * 求两个节点的颜色差距
+ * @param {Node} nodeA 
+ * @param {Node} nodeB 
+ * @returns 
+ */
 function getNodeColorDiff (nodeA, nodeB) {
   let rgbA = getNodeRGB(nodeA)
   let rgbB = getNodeRGB(nodeB)
@@ -164,8 +175,8 @@ async function solveMaze (matrix, width, height, begin, end, cb = () => {}) {
       if (node.checked === false) {
         node.checked = true
 
-        let colordiff = node.colordiff = getNodeColorDiff(node, current)
-        const colorDiffThreshold = 2 // 容许通过的颜色差异，范围 0~100
+        let colordiff = getNodeColorDiff(node, current)
+        const colorDiffThreshold = 2.25 // 容许通过的颜色差异，范围 0~100
 
         node.parent = current
         node.endDistance = getDistance(node, nodeGraph.endNode)
