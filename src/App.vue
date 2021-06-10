@@ -18,7 +18,7 @@
 
 <script>
 import { solveMaze } from './maze'
-import defaultMazeImg from './assets/maze1.png'
+import defaultMazeImg from './assets/maze-paper.jpg'
 
 async function waitFrame () {
   return new Promise((resolve) => requestAnimationFrame(resolve))
@@ -65,6 +65,7 @@ export default {
     },
     loadImage (url) {
       let vm = this
+      vm.clickPoints = []
       let image = new Image()
       image.src = url
       
@@ -104,8 +105,7 @@ export default {
 
       let ctx = canvas.getContext('2d')
       let imgData = ctx.getImageData(0, 0, width, height)
-      let rgbaArray = new Int32Array(imgData.data.buffer)
-      let m = rgbaArray.map(item => item === -1 ? 1 : 0) // -1 可以理解为 rgba(255,255,255,255)，即为白色
+      let m = new Uint32Array(imgData.data.buffer)
 
       let ctxChecked = canvasChecked.getContext('2d')
       ctxChecked.clearRect(0, 0, width, height)
@@ -134,15 +134,6 @@ export default {
 
         return vm.isExitSolve
       })
-    },
-    onCellClick ($event, node) {
-      if ($event.altKey) {
-        this.nodeGraph.setEndNode(node)
-      } else if ($event.ctrlKey) {
-
-      } else {
-        this.nodeGraph.switchNodeValue(node)
-      }
     }
   },
   async created () {

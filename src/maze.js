@@ -1,3 +1,5 @@
+import { color_diff } from './color'
+
 class Node {
   constructor (x, y, value) {
     this.x = x
@@ -30,17 +32,14 @@ class NodeGraph {
 
   buildNodeGraph () {
     let { width, height, beginPos, endPos } = this
-    
+
+    // 先处理 begin end
+    this.beginNode = this.getNode(beginPos[0], beginPos[1])
+    this.endNode = this.getNode(endPos[0], endPos[1])
+
     for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {
         let node = this.getNode(x, y)
-
-        if (x === beginPos[0] && y === beginPos[1]) {
-          this.beginNode = node
-        }
-        if (x === endPos[0] && y === endPos[1]) {
-          this.endNode = node
-        }
 
         let up = this.getNode(x, y - 1)
         let down = this.getNode(x, y + 1)
@@ -126,6 +125,21 @@ function getDistance (nodeA, nodeB) {
   return (x + y)
 }
 
+function getNodeRGB (node) {
+  let { value } = node
+  let r = value & 0xFF
+  let g = value >> 8 & 0xFF
+  let b = value >> 16 & 0xFF
+  return [ r, g, b ]
+}
+
+function getNodeColorDiff (nodeA, nodeB) {
+  let rgbA = getNodeRGB(nodeA)
+  let rgbB = getNodeRGB(nodeB)
+
+  return color_diff(rgbA, rgbB)
+}
+
 async function solveMaze (matrix, width, height, begin, end, cb = () => {}) {
   let path = []
   let nodeGraph = new NodeGraph(matrix, width, height, begin, end)
@@ -143,22 +157,24 @@ async function solveMaze (matrix, width, height, begin, end, cb = () => {}) {
 
     if (equalsNode(current, nodeGraph.endNode)) {
       await cb(nodeGraph, current, path, true)
-      while (equalsNode(current, nodeGraph.endNode)) {
-        await sleep(1000)
-      }
-      nodeGraph.queue = [ current ]
-      nodeGraph.beginNode = current
-      continue
+      return path
     }
 
     for (let node of current.nearNodes) {
-      if (node.checked === false && node.value) {
-        node.parent = current
+      if (node.checked === false) {
         node.checked = true
+
+        let colordiff = node.colordiff = getNodeColorDiff(node, current)
+        const colorDiffThreshold = 2 // 容许通过的颜色差异，范围 0~100
+
+        node.parent = current
         node.endDistance = getDistance(node, nodeGraph.endNode)
         node.beginDistance = current.beginDistance + 1
         node.cost = node.endDistance + node.beginDistance
-        nodeGraph.queue.push(node)
+        
+        if (colordiff < colorDiffThreshold) {
+          nodeGraph.queue.push(node)
+        }
       }
     }
   }
