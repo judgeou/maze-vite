@@ -142,7 +142,7 @@ function getNodeColorDiff (nodeA, nodeB) {
   return color_diff(rgbA, rgbB)
 }
 
-async function solveMaze (matrix, width, height, begin, end, cb = () => {}) {
+async function solveMaze (matrix, width, height, begin, end, mode, cb = () => {}) {
   let path = []
   let nodeGraph = new NodeGraph(matrix, width, height, begin, end)
   nodeGraph.buildNodeGraph()
@@ -174,9 +174,15 @@ async function solveMaze (matrix, width, height, begin, end, cb = () => {}) {
         node.parent = current
         node.endDistance = getDistance(node, nodeGraph.endNode)
         node.beginDistance = current.beginDistance + 1
-        node.cost = node.endDistance + node.beginDistance
+
+        if (mode === "1") {
+          node.cost = node.endDistance + node.beginDistance
         
-        if (colordiff < colorDiffThreshold) {
+          if (colordiff < colorDiffThreshold) {
+            nodeGraph.queue.push(node)
+          }
+        } else if (mode === "2") {
+          node.cost = node.endDistance + node.beginDistance + (colordiff * width * height)
           nodeGraph.queue.push(node)
         }
       }

@@ -2,9 +2,15 @@
   <div>
     <div>
       <input type="file" accept="image/*" @change="onFile">
-      <input type="number" v-model.number="skipCount">
-      <span v-show="clickPoints.length < 2">请点击图片的任意两处开始寻路</span>
-      <span v-show="clickPoints.length >= 2">起点：{{ begin }}终点：{{ end }}</span>
+      
+      模式：
+      <label><input type="radio" name="mode" value="1" v-model="mode" /> 严格 </label>
+      <label><input type="radio" name="mode" value="2" v-model="mode" /> 模糊 </label>
+      
+      动画速度：<input type="number" v-model.number="skipCount">
+      <span v-show="clickPoints.length < 2">请点击图片的任意两处开始寻路 </span>
+      <span v-show="begin">起点：{{ begin }}</span>
+      <span v-show="end">终点：{{ end }}</span>
     </div>
 
     <div class="maze-view" @click="onClickMaze">
@@ -29,6 +35,7 @@ export default {
     return {
       width: 0,
       height: 0,
+      mode: "1",
       path: [],
       clickPoints: [],
       current: null,
@@ -41,6 +48,8 @@ export default {
       let { clickPoints } = this
       if (clickPoints.length >= 2) {
         return clickPoints[clickPoints.length - 2]
+      } else if (clickPoints.length === 1) {
+        return clickPoints[0]
       } else {
         return null
       }
@@ -116,7 +125,7 @@ export default {
 
       let count = 0
 
-      await solveMaze(m, width, height, vm.begin, vm.end, async (nodeGraph, current, path, done) => {
+      await solveMaze(m, width, height, vm.begin, vm.end, vm.mode, async (nodeGraph, current, path, done) => {
         ctxChecked.fillStyle = "#74b9ff"
         ctxChecked.fillRect(current.x, current.y, 1, 1)
 
