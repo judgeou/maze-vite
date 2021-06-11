@@ -11,7 +11,6 @@ class Node {
     this.endDistance = 0
     this.checked = false
     this.parent = null
-    this.nearNodes = []
   }
 }
 
@@ -47,18 +46,6 @@ class NodeGraph {
     // 先处理 begin end
     this.beginNode = this.getNode(beginPos[0], beginPos[1])
     this.endNode = this.getNode(endPos[0], endPos[1])
-
-    for (let y = 0; y < height; y++) {
-      for (let x = 0; x < width; x++) {
-        let node = this.getNode(x, y)
-
-        let up = this.getNode(x, y - 1)
-        let down = this.getNode(x, y + 1)
-        let left = this.getNode(x - 1, y)
-        let right = this.getNode(x + 1, y)
-        node.nearNodes = [ up, down, left, right].filter(node => node !== null)
-      }
-    }
   }
 
   getNode (x, y) {
@@ -76,10 +63,17 @@ class NodeGraph {
     }
   }
 
+  getNearNodes (node) {
+    let { x, y } = node
+    let up = this.getNode(x, y - 1)
+    let down = this.getNode(x, y + 1)
+    let left = this.getNode(x - 1, y)
+    let right = this.getNode(x + 1, y)
+    return [ up, down, left, right ].filter(node => node !== null)
+  }
+
   popBestNextNode () {
-    let { queue } = this
-    let bestNode = queue.pop()
-    return bestNode
+    return this.queue.pop()
   }
 
   switchNodeValue (node) {
@@ -168,7 +162,7 @@ async function solveMaze (matrix, width, height, begin, end, cb = () => {}) {
       return path
     }
 
-    let { nearNodes } = current
+    let nearNodes = nodeGraph.getNearNodes(current)
     for (let i = nearNodes.length - 1; i >= 0; i--) {
       let node = nearNodes[i]
       if (node.checked === false) {
