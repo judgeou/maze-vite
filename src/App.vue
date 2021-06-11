@@ -18,7 +18,7 @@
 
 <script>
 import { solveMaze } from './maze'
-import defaultMazeImg from './assets/maze-paper.jpg'
+import defaultMazeImg from './assets/maze1.png'
 
 async function waitFrame () {
   return new Promise((resolve) => requestAnimationFrame(resolve))
@@ -33,7 +33,7 @@ export default {
       clickPoints: [],
       current: null,
       isExitSolve: false,
-      skipCount: 50
+      skipCount: 5000
     }
   },
   computed: {

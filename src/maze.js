@@ -1,4 +1,5 @@
 import { color_diff } from './color'
+import Heap from 'heap-js'
 
 class Node {
   constructor (x, y, value) {
@@ -21,7 +22,15 @@ class NodeGraph {
     this.width = width
     this.height = height
 
-    this.queue = []
+    this.queue = new Heap((a, b) => {
+      if (a.cost > b.cost) {
+        return 1
+      } else if (a.cost < b.cost) {
+        return -1
+      } else {
+        return 0
+      }
+    })
     this.current = null
     
     this.beginPos = beginPos
@@ -32,6 +41,8 @@ class NodeGraph {
 
   buildNodeGraph () {
     let { width, height, beginPos, endPos } = this
+
+    this.nodes = new Array(width * height)
 
     // 先处理 begin end
     this.beginNode = this.getNode(beginPos[0], beginPos[1])
@@ -45,7 +56,7 @@ class NodeGraph {
         let down = this.getNode(x, y + 1)
         let left = this.getNode(x - 1, y)
         let right = this.getNode(x + 1, y)
-        node.nearNodes = [ up, down, left, right].filter(node => node)
+        node.nearNodes = [ up, down, left, right].filter(node => node !== null)
       }
     }
   }
@@ -54,12 +65,10 @@ class NodeGraph {
     let { nodes, width, height, matrix } = this
     if (x >= 0 && y >= 0 && x < width && y < height) {
       let node = nodes[y * width + x]
-      if (!node) {
+      if (node === undefined) {
         let value = matrix[y * width + x]
-        if (value !== undefined) {
-          node = new Node(x, y, value)
-          nodes[y * width + x] = node
-        }
+        node = new Node(x, y, value)
+        nodes[y * width + x] = node
       }
       return node
     } else {
@@ -69,19 +78,7 @@ class NodeGraph {
 
   popBestNextNode () {
     let { queue } = this
-    let bestNode = queue[0]
-    let bestNodeIndex = 0
-    let { length } = queue
-
-    for (let i = 0; i < length; i++) {
-      let node = queue[i]
-      if (node.cost < bestNode.cost) {
-        bestNode = node
-        bestNodeIndex = i
-      }
-    }
-
-    queue.splice(bestNodeIndex, 1)
+    let bestNode = queue.pop()
     return bestNode
   }
 
@@ -107,7 +104,7 @@ function buildPath (endNode) {
   let path = []
   let node = endNode
 
-  while (node) {
+  while (node !== null) {
     path.push(node)
     node = node.parent
   }
@@ -156,27 +153,29 @@ async function solveMaze (matrix, width, height, begin, end, cb = () => {}) {
   let nodeGraph = new NodeGraph(matrix, width, height, begin, end)
   nodeGraph.buildNodeGraph()
   
-  nodeGraph.queue = [ nodeGraph.beginNode ]
+  nodeGraph.queue.push(nodeGraph.beginNode)
 
   while (nodeGraph.queue.length) {
     let current = nodeGraph.current = nodeGraph.popBestNextNode()
     current.checked = true
 
-    path = buildPath(current)
-    let exit = await cb(nodeGraph, current, path, false)
+    let exit = await cb(nodeGraph, current, [], false)
     if (exit) { return }
 
     if (equalsNode(current, nodeGraph.endNode)) {
+      path = buildPath(current)
       await cb(nodeGraph, current, path, true)
       return path
     }
 
-    for (let node of current.nearNodes) {
+    let { nearNodes } = current
+    for (let i = nearNodes.length - 1; i >= 0; i--) {
+      let node = nearNodes[i]
       if (node.checked === false) {
         node.checked = true
 
         let colordiff = getNodeColorDiff(node, current)
-        const colorDiffThreshold = 2.25 // 容许通过的颜色差异，范围 0~100
+        const colorDiffThreshold = 2 // 容许通过的颜色差异，范围 0~100
 
         node.parent = current
         node.endDistance = getDistance(node, nodeGraph.endNode)
