@@ -98,15 +98,6 @@ export default {
         this.reload()
       }
     },
-    indexToPos (i) {
-      let y = i % this.width
-      let x = Math.floor(i / this.width)
-      return { x, y }
-    },
-    cellStyle (i) {
-      let { x, y } = this.indexToPos(i)
-      return { left: `${y * 1.25}em`, top: `${x * 1.25}em` }
-    },
     async reload () {
       let vm = this
       let { width, height } = vm
