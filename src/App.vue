@@ -13,6 +13,11 @@
       <span v-show="end">终点：{{ end }}</span>
     </div>
 
+    <div>
+      width: <input type="number" v-model.number="widthInput"> height: <input type="number" v-model.number="heightInput">
+      <button @click="generatMaze">生成迷宫</button>
+    </div>
+
     <div class="maze-view" @click="onClickMaze">
       <canvas style="z-index: 0" ref="canvas"></canvas>
       <canvas style="z-index: 1" ref="canvasChecked"></canvas>
@@ -23,7 +28,7 @@
 </template>
 
 <script>
-import { solveMaze } from './maze'
+import { solveMaze, MazeGanerator } from './maze'
 import defaultMazeImg from './assets/maze1.png'
 
 async function waitFrame () {
@@ -35,6 +40,8 @@ export default {
     return {
       width: 0,
       height: 0,
+      widthInput: 8,
+      heightInput: 8,
       mode: "1",
       path: [],
       clickPoints: [],
@@ -91,6 +98,16 @@ export default {
         URL.revokeObjectURL(url)
       }
     },
+    generatMaze () {
+      let { widthInput, heightInput } = this
+      let { canvas } = this.$refs
+      let generator = new MazeGanerator(widthInput, heightInput)
+      generator.build()
+      generator.renderCanvas(canvas)
+
+      this.width = widthInput * generator.cellSize
+      this.height = heightInput * generator.cellSize
+    },
     onClickMaze ($event) {
       let { clickPoints } = this
       clickPoints.push([$event.offsetX, $event.offsetY])
@@ -146,7 +163,7 @@ export default {
     }
   },
   async created () {
-    this.loadImage(defaultMazeImg)
+    // this.loadImage(defaultMazeImg)
   }
 }
 </script>

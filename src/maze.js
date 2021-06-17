@@ -14,6 +14,98 @@ class Node {
   }
 }
 
+class Cell {
+  constructor (x, y, value) {
+    this.x = x
+    this.y = y
+    this.value = value
+  }
+}
+
+class MazeGanerator {
+  static 上 = 0b1000
+  static 左 = 0b0100
+  static 下 = 0b0010
+  static 右 = 0b0001
+
+  /**
+   * 
+   * @param {Number} width 
+   * @param {Number} height 
+   */
+  constructor (width, height) {
+    this.width = width
+    this.height = height
+    this.cellSize = 50
+    this.cellBorder = 2
+    this.nodes = new Array(width * height)
+  }
+
+  build () {
+    let { nodes } = this
+    let { length } = nodes
+
+    for (let i = 0; i < length; i++) {
+      let { x, y } = this.indexToPos(i)
+      let node = nodes[i] = new Cell(x, y, 0b1111) // 4个bit代表上下左右墙壁的开闭状态，0：开，1：闭
+    }
+  }
+
+  /**
+   * 
+   * @param {HTMLCanvasElement} canvas 
+   */
+  renderCanvas (canvas) {
+    const { 上, 左, 下, 右 } = MazeGanerator
+    let { nodes, width, height, cellSize, cellBorder } = this
+    let { length } = nodes
+    
+    canvas.width = width * cellSize
+    canvas.height = height * cellSize
+    let ctx = canvas.getContext('2d')
+    ctx.fillStyle = "#FFFFFF"
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+    for (let i = 0; i < length; i++) {
+      let node = nodes[i]
+      let { x, y, value } = node
+      let leftTopX = x * cellSize
+      let leftTopY = y * cellSize
+
+      // 开始画边框
+      ctx.beginPath()
+      ctx.lineWidth = cellBorder
+
+      if ((value & 上) === 上) {
+        ctx.moveTo(leftTopX, leftTopY)
+        ctx.lineTo(leftTopX + cellSize,  leftTopY)
+      }
+      if ((value & 左) === 左) {
+        ctx.moveTo(leftTopX, leftTopY)
+        ctx.lineTo(leftTopX,  leftTopY + cellSize)
+      }
+      if ((value & 下) === 下) {
+        ctx.moveTo(leftTopX, leftTopY + cellSize)
+        ctx.lineTo(leftTopX + cellSize,  leftTopY + cellSize)
+      }
+      if ((value & 右) === 右) {
+        ctx.moveTo(leftTopX + cellSize, leftTopY)
+        ctx.lineTo(leftTopX + cellSize,  leftTopY + cellSize)
+      }
+
+      ctx.closePath()
+      ctx.strokeStyle = '#000000'
+      ctx.stroke()
+    }
+  }
+
+  indexToPos (i) {
+    let x = i % this.width
+    let y = Math.floor(i / this.width)
+    return { x, y }
+  }
+}
+
 class NodeGraph {
   constructor (matrix, width, height, beginPos, endPos) {
     this.nodes = []
@@ -193,5 +285,6 @@ async function solveMaze (matrix, width, height, begin, end, mode, cb = () => {}
 }
 
 export {
+  MazeGanerator,
   solveMaze
 }
