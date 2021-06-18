@@ -39,16 +39,19 @@ class MazeGanerator {
     this.cellSize = 50
     this.cellBorder = 2
     this.nodes = new Array(width * height)
+    this.nodesShuffle = new Array(width * height)
   }
 
   build () {
-    let { nodes } = this
+    let { nodes, nodesShuffle } = this
     let { length } = nodes
 
     for (let i = 0; i < length; i++) {
       let { x, y } = this.indexToPos(i)
-      nodes[i] = new Cell(x, y, 0b1111) // 4个bit代表上下左右墙壁的开闭状态，0：开，1：闭
+      nodesShuffle[i] = nodes[i] = new Cell(x, y, 0b1111) // 4个bit代表上下左右墙壁的开闭状态，0：开，1：闭
     }
+
+    this.shuffle(nodesShuffle)
   }
 
   /**
@@ -56,22 +59,43 @@ class MazeGanerator {
    * @param {Function} cb 
    */
   async breakWall (cb = async () => {}) {
-    let { nodes } = this
-    let current = nodes[0]
+    let { nodesShuffle } = this
+    let { length } = nodesShuffle
 
-    for (;;) {
+    for (let i = 0; i < length; i++) {
+      let current = nodesShuffle[i]
       let breakDirection = this.getRandomNext(current)
+
       await cb(current)
-      
+
       if (breakDirection !== null) {
         current.value ^= breakDirection.value
         breakDirection.nextNode.value ^= breakDirection.oppositeValue
-
-        current = nodes[this.getRandomInt(0, nodes.length - 1)]
-      } else {
-        break
       }
     }
+  }
+
+  /**
+   * 对数组进行洗牌
+   * @param {Array} array 
+   * @returns 
+   */
+  shuffle (array) {
+    var m = array.length, t, i;
+  
+    // While there remain elements to shuffle…
+    while (m) {
+  
+      // Pick a remaining element…
+      i = Math.floor(Math.random() * m--);
+  
+      // And swap it with the current element.
+      t = array[m];
+      array[m] = array[i];
+      array[i] = t;
+    }
+  
+    return array;
   }
 
   /**
@@ -198,8 +222,9 @@ class MazeGanerator {
       ctx.stroke()
 
       if (node === current) {
+        let w = cellBorder
         ctx.fillStyle = '#fd79a8'
-        ctx.fillRect(leftTopX, leftTopY, cellSize, cellSize)
+        ctx.fillRect(leftTopX + w, leftTopY + w, cellSize - w * 2, cellSize - w * 2)
       }
     }
   }

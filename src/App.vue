@@ -115,6 +115,8 @@ export default {
         generator.renderCanvas(canvas, current)
         return waitFrame()
       })
+
+      generator.renderCanvas(canvas)
     },
     onClickMaze ($event) {
       let { clickPoints } = this
