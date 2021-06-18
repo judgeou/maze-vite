@@ -98,15 +98,23 @@ export default {
         URL.revokeObjectURL(url)
       }
     },
-    generatMaze () {
+    async generatMaze () {
       let { widthInput, heightInput } = this
-      let { canvas } = this.$refs
+      let { canvas, canvasChecked, canvasPath } = this.$refs
       let generator = new MazeGanerator(widthInput, heightInput)
       generator.build()
       generator.renderCanvas(canvas)
 
       this.width = widthInput * generator.cellSize
       this.height = heightInput * generator.cellSize
+      this.clickPoints = []
+      canvasChecked.getContext('2d').clearRect(0, 0, canvasChecked.width, canvasChecked.height)
+      canvasPath.getContext('2d').clearRect(0, 0, canvasPath.width, canvasPath.height)
+
+      await generator.breakWall(async (current) => {
+        generator.renderCanvas(canvas, current)
+        return waitFrame()
+      })
     },
     onClickMaze ($event) {
       let { clickPoints } = this
@@ -128,6 +136,9 @@ export default {
       let vm = this
       let { width, height } = vm
       let { canvas, canvasChecked, canvasPath } = vm.$refs
+
+      canvasPath.width = canvasChecked.width = width
+      canvasPath.height = canvasChecked.height = height
 
       let ctx = canvas.getContext('2d')
       let imgData = ctx.getImageData(0, 0, width, height)

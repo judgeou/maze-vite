@@ -47,15 +47,115 @@ class MazeGanerator {
 
     for (let i = 0; i < length; i++) {
       let { x, y } = this.indexToPos(i)
-      let node = nodes[i] = new Cell(x, y, 0b1111) // 4个bit代表上下左右墙壁的开闭状态，0：开，1：闭
+      nodes[i] = new Cell(x, y, 0b1111) // 4个bit代表上下左右墙壁的开闭状态，0：开，1：闭
     }
+  }
+
+  /**
+   * 破墙循环
+   * @param {Function} cb 
+   */
+  async breakWall (cb = async () => {}) {
+    let { nodes } = this
+    let current = nodes[0]
+
+    for (;;) {
+      let breakDirection = this.getRandomNext(current)
+      await cb(current)
+      
+      if (breakDirection !== null) {
+        current.value ^= breakDirection.value
+        breakDirection.nextNode.value ^= breakDirection.oppositeValue
+
+        current = breakDirection.nextNode
+      } else {
+        break
+      }
+    }
+  }
+
+  /**
+   * 获取周围可以破的墙
+   * @param {Cell} node 
+   * @returns 
+   */
+  getNextDirections (node) {
+    const { 上, 左, 下, 右 } = MazeGanerator
+    let { x, y, value } = node
+
+    return [ 上, 左, 下, 右 ]
+    .filter(direction => (value & direction) === direction)
+    .map(direction => {
+      let nextX
+      let nextY
+      let oppositeValue
+  
+      if (direction === 上) {
+        oppositeValue = 下
+        nextX = x
+        nextY = y - 1
+      } else if (direction === 左) {
+        oppositeValue = 右
+        nextX = x - 1
+        nextY = y
+      } else if (direction === 下) {
+        oppositeValue = 上
+        nextX = x
+        nextY = y + 1
+      } else if (direction === 右) {
+        oppositeValue = 左
+        nextX = x + 1
+        nextY = y
+      }
+      
+      // 边界判断
+      if (nextX >= 0 && nextY >= 0 && nextX < this.width && nextY < this.height) {
+        return { x: nextX, y: nextY, value: direction, oppositeValue }
+      } else {
+        return null
+      }
+    })
+    .filter(item => item !== null)
+  }
+
+  /**
+   * 随机获取周围可以破的墙
+   * @param {Cell} node 
+   * @returns 
+   */
+  getRandomNext (node) {
+    let nextDirections = this.getNextDirections(node)
+
+    if (nextDirections.length > 0) {
+      let nextDirection = nextDirections[this.getRandomInt(0, nextDirections.length - 1)]
+      let nextNode = this.nodes[this.posToIndex(nextDirection.x, nextDirection.y)]
+  
+      return {
+        nextNode,
+        value: nextDirection.value,
+        oppositeValue: nextDirection.oppositeValue
+      }
+    } else {
+      return null
+    }
+  }
+
+  /**
+   * 范围取随机数
+   * @param {Number} min 
+   * @param {Number} max 
+   * @returns 
+   */
+  getRandomInt (min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min
   }
 
   /**
    * 
    * @param {HTMLCanvasElement} canvas 
+   * @param {Cell} node
    */
-  renderCanvas (canvas) {
+  renderCanvas (canvas, current) {
     const { 上, 左, 下, 右 } = MazeGanerator
     let { nodes, width, height, cellSize, cellBorder } = this
     let { length } = nodes
@@ -96,6 +196,11 @@ class MazeGanerator {
       ctx.closePath()
       ctx.strokeStyle = '#000000'
       ctx.stroke()
+
+      if (node === current) {
+        ctx.fillStyle = '#fd79a8'
+        ctx.fillRect(leftTopX, leftTopY, cellSize, cellSize)
+      }
     }
   }
 
@@ -103,6 +208,10 @@ class MazeGanerator {
     let x = i % this.width
     let y = Math.floor(i / this.width)
     return { x, y }
+  }
+
+  posToIndex (x, y) {
+    return y * this.width + x
   }
 }
 
