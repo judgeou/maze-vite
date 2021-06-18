@@ -67,7 +67,7 @@ class MazeGanerator {
         current.value ^= breakDirection.value
         breakDirection.nextNode.value ^= breakDirection.oppositeValue
 
-        current = breakDirection.nextNode
+        current = nodes[this.getRandomInt(0, nodes.length - 1)]
       } else {
         break
       }
