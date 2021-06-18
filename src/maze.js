@@ -19,6 +19,7 @@ class Cell {
     this.x = x
     this.y = y
     this.value = value
+    this.checked = false
   }
 }
 
@@ -40,6 +41,7 @@ class MazeGanerator {
     this.cellBorder = 2
     this.nodes = new Array(width * height)
     this.nodesShuffle = new Array(width * height)
+    this.nodesChecked = []
   }
 
   build () {
@@ -59,18 +61,28 @@ class MazeGanerator {
    * @param {Function} cb 
    */
   async breakWall (cb = async () => {}) {
-    let { nodesShuffle } = this
-    let { length } = nodesShuffle
+    let { nodes, nodesChecked } = this
 
-    for (let i = 0; i < length; i++) {
-      let current = nodesShuffle[i]
+    nodesChecked.push(nodes[0])
+    nodes[0].checked = true
+
+    for (; nodesChecked.length > 0;) {
+      let randomIndex = this.getRandomInt(0, nodesChecked.length - 1)
+      let current = nodesChecked[randomIndex]
       let breakDirection = this.getRandomNext(current)
 
       await cb(current)
 
       if (breakDirection !== null) {
         current.value ^= breakDirection.value
-        breakDirection.nextNode.value ^= breakDirection.oppositeValue
+
+        let { nextNode } = breakDirection
+        nextNode.value ^= breakDirection.oppositeValue
+        nextNode.checked = true
+
+        nodesChecked.push(nextNode)
+      } else {
+        nodesChecked.splice(randomIndex, 1)
       }
     }
   }
@@ -134,12 +146,13 @@ class MazeGanerator {
       
       // 边界判断
       if (nextX >= 0 && nextY >= 0 && nextX < this.width && nextY < this.height) {
-        return { x: nextX, y: nextY, value: direction, oppositeValue }
+        let nextNode = this.nodes[this.posToIndex(nextX, nextY)]
+        return { x: nextX, y: nextY, value: direction, oppositeValue, nextNode }
       } else {
         return null
       }
     })
-    .filter(item => item !== null)
+    .filter(item => item !== null && item.nextNode.checked === false)
   }
 
   /**
@@ -152,10 +165,9 @@ class MazeGanerator {
 
     if (nextDirections.length > 0) {
       let nextDirection = nextDirections[this.getRandomInt(0, nextDirections.length - 1)]
-      let nextNode = this.nodes[this.posToIndex(nextDirection.x, nextDirection.y)]
   
       return {
-        nextNode,
+        nextNode: nextDirection.nextNode,
         value: nextDirection.value,
         oppositeValue: nextDirection.oppositeValue
       }
