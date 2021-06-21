@@ -12,9 +12,11 @@
       <span v-show="begin">起点：{{ begin }}</span>
       <span v-show="end">终点：{{ end }}</span>
     </div>
-
+    <hr>
     <div>
       width: <input type="number" v-model.number="widthInput"> height: <input type="number" v-model.number="heightInput">
+      速度倍率：<input type="number" v-model.number="generatSpeed">
+      方格大小：<input type="number" v-model.number="cellSize">
       <button @click="generatMaze">生成迷宫</button>
     </div>
 
@@ -47,7 +49,9 @@ export default {
       clickPoints: [],
       current: null,
       isExitSolve: false,
-      skipCount: 5000
+      skipCount: 5000,
+      generatSpeed: 1,
+      cellSize: 50
     }
   },
   computed: {
@@ -99,9 +103,10 @@ export default {
       }
     },
     async generatMaze () {
-      let { widthInput, heightInput } = this
+      let vm = this
+      let { widthInput, heightInput, cellSize } = this
       let { canvas, canvasChecked, canvasPath } = this.$refs
-      let generator = new MazeGanerator(widthInput, heightInput)
+      let generator = new MazeGanerator(widthInput, heightInput, cellSize)
       generator.build()
       generator.renderCanvas(canvas)
 
@@ -111,9 +116,13 @@ export default {
       canvasChecked.getContext('2d').clearRect(0, 0, canvasChecked.width, canvasChecked.height)
       canvasPath.getContext('2d').clearRect(0, 0, canvasPath.width, canvasPath.height)
 
+      let count = 0
       await generator.breakWall(async (current) => {
         generator.renderCanvas(canvas, current)
-        return waitFrame()
+        count++
+        if (count % vm.generatSpeed === 0) {
+          return waitFrame()
+        }
       })
 
       generator.renderCanvas(canvas)

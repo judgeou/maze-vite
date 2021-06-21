@@ -34,11 +34,11 @@ class MazeGanerator {
    * @param {Number} width 
    * @param {Number} height 
    */
-  constructor (width, height) {
+  constructor (width, height, cellSize) {
     this.width = width
     this.height = height
-    this.cellSize = 50
-    this.cellBorder = 2
+    this.cellSize = cellSize
+    this.cellBorder = 1
     this.nodes = new Array(width * height)
     this.nodesShuffle = new Array(width * height)
     this.nodesChecked = []
