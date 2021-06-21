@@ -118,9 +118,9 @@ export default {
 
       let count = 0
       await generator.breakWall(async (current) => {
-        generator.renderCanvas(canvas, current)
         count++
         if (count % vm.generatSpeed === 0) {
+          generator.renderCanvas(canvas, current)
           return waitFrame()
         }
       })
