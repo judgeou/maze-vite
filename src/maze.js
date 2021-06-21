@@ -66,9 +66,9 @@ class MazeGanerator {
     nodesChecked.push(nodes[0])
     nodes[0].checked = true
 
+    let current = nodes[0]
+
     for (; nodesChecked.length > 0;) {
-      let randomIndex = this.getRandomInt(0, nodesChecked.length - 1)
-      let current = nodesChecked[randomIndex]
       let breakDirection = this.getRandomNext(current)
 
       await cb(current)
@@ -81,8 +81,9 @@ class MazeGanerator {
         nextNode.checked = true
 
         nodesChecked.push(nextNode)
+        current = nextNode
       } else {
-        nodesChecked.splice(randomIndex, 1)
+        current = nodesChecked.pop()
       }
     }
   }
@@ -232,6 +233,12 @@ class MazeGanerator {
       ctx.closePath()
       ctx.strokeStyle = '#000000'
       ctx.stroke()
+
+      if (this.nodesChecked.indexOf(node) >= 0) {
+        let w = cellBorder
+        ctx.fillStyle = '#74b9ff'
+        ctx.fillRect(leftTopX + w, leftTopY + w, cellSize - w * 2, cellSize - w * 2)
+      }
 
       if (node === current) {
         let w = cellBorder
