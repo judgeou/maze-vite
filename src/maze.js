@@ -23,6 +23,15 @@ class Cell {
   }
 }
 
+class Area {
+  constructor (x, y, width, height) {
+    this.x = x
+    this.y = y
+    this.width = width
+    this.height = height
+  }
+}
+
 class MazeGanerator {
   static 上 = 0b1000
   static 左 = 0b0100
@@ -40,20 +49,119 @@ class MazeGanerator {
     this.cellSize = cellSize
     this.cellBorder = 1
     this.nodes = new Array(width * height)
-    this.nodesShuffle = new Array(width * height)
     this.nodesChecked = []
+    this.areas = []
+    this.gaps = []
+  }
+
+  async createWall (cb = async () => {}) {
+    let { width, height } = this
+    let areas = this.areas = [ new Area(0, 0, width, height) ]
+
+    for (;;) {
+      let index = areas.findIndex(area => area.width > 1 || area.height > 1)
+      
+      if (index >= 0) {
+        let area = areas[index]
+        let [ areaA, areaB ] = this.splitArea(area)
+
+        areas.splice(index, 1)
+        areas.push(areaA)
+        areas.push(areaB)
+
+        await cb()
+      } else {
+        break
+      }
+    }
+  }
+
+  splitArea (area) {
+    let { x, y, width, height } = area
+    let xA, xB, yA, yB, widthA, widthB, heightA, heightB // A、B 是两个分裂后的区域
+
+    if ( width > height) { // 竖切
+      let splitLength = Math.floor(width / 2) // 对半分
+      
+      xA = x
+      yA = y
+      widthA = splitLength
+      heightA = height
+
+      xB = x + splitLength
+      yB = y
+      widthB = width - splitLength
+      heightB = height
+
+      let yRandom = this.getRandomInt(y, y + height - 1)
+      let gap = { x: xB, y: yRandom, direction: 'horizontal' }
+      this.gaps.push(gap)
+    } else { // 横切
+      let splitLength = Math.floor(height / 2) // 对半分
+      
+      xA = x
+      yA = y
+      widthA = width
+      heightA = splitLength
+
+      xB = x
+      yB = y + splitLength
+      widthB = width
+      heightB = height - splitLength
+
+      let xRandom = this.getRandomInt(x, x + width - 1)
+      let gap = { x: xRandom, y: yB, direction: 'vertical' }
+      this.gaps.push(gap)
+    }
+
+    let areaA = new Area(xA, yA, widthA, heightA)
+    let areaB = new Area(xB, yB, widthB, heightB)
+
+    return [ areaA, areaB ]
+  }
+
+  /**
+   * 
+   * @param {HTMLCanvasElement} canvas 
+   */
+   renderAreasCanvas (canvas) {
+    let { areas, gaps, width, height, cellSize, cellBorder } = this
+
+    canvas.width = width * cellSize
+    canvas.height = height * cellSize
+    let ctx = canvas.getContext('2d')
+    ctx.fillStyle = "#FFFFFF"
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+    for (let area of areas) {
+      let { x, y, width, height, gap } = area
+
+      // 通过画两个大小矩形达到画出边框的效果
+      ctx.fillStyle = "#000000"
+      ctx.fillRect(x * cellSize, y * cellSize, width * cellSize, height * cellSize)
+      ctx.fillStyle = "#FFFFFF"
+      ctx.fillRect(x * cellSize + cellBorder, y * cellSize + cellBorder, width * cellSize - cellBorder * 2, height * cellSize - cellBorder * 2)
+    }
+
+    for (let gap of gaps) {
+      // 画出缺口
+      ctx.fillStyle = "#FFFFFF"
+      if (gap.direction === 'vertical') {
+        ctx.fillRect(gap.x * cellSize + cellBorder, gap.y * cellSize - cellBorder, cellSize - cellBorder * 2, cellBorder * 2)
+      } else if (gap.direction === 'horizontal') {
+        ctx.fillRect(gap.x * cellSize - cellBorder, gap.y * cellSize + cellBorder, cellBorder * 2, cellSize - cellBorder * 2)
+      }
+    }
   }
 
   build () {
-    let { nodes, nodesShuffle } = this
+    let { nodes } = this
     let { length } = nodes
 
     for (let i = 0; i < length; i++) {
       let { x, y } = this.indexToPos(i)
-      nodesShuffle[i] = nodes[i] = new Cell(x, y, 0b1111) // 4个bit代表上下左右墙壁的开闭状态，0：开，1：闭
+      nodes[i] = new Cell(x, y, 0b1111) // 4个bit代表上下左右墙壁的开闭状态，0：开，1：闭
     }
-
-    this.shuffle(nodesShuffle)
   }
 
   /**
