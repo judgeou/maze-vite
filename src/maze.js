@@ -81,7 +81,7 @@ class MazeGanerator {
     let xA, xB, yA, yB, widthA, widthB, heightA, heightB // A、B 是两个分裂后的区域
 
     if ( width > height) { // 竖切
-      let splitLength = Math.floor(width / 2) // 对半分
+      let splitLength = this.getRandomInt(1, width - 1) // 随机切割
       
       xA = x
       yA = y
@@ -97,8 +97,8 @@ class MazeGanerator {
       let gap = { x: xB, y: yRandom, direction: 'horizontal' }
       this.gaps.push(gap)
     } else { // 横切
-      let splitLength = Math.floor(height / 2) // 对半分
-      
+      let splitLength = this.getRandomInt(1, height - 1) // 随机切割
+
       xA = x
       yA = y
       widthA = width
