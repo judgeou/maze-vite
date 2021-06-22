@@ -12,6 +12,14 @@
       <span v-show="begin">起点：{{ begin }}</span>
       <span v-show="end">终点：{{ end }}</span>
     </div>
+    <hr>
+    <div>
+      width: <input type="number" v-model.number="widthInput"> height: <input type="number" v-model.number="heightInput">
+      速度倍率：<input type="number" v-model.number="generatSpeed">
+      方格大小：<input type="number" v-model.number="cellSize">
+      <button @click="generatMaze1">生成迷宫（破墙法）</button>
+      <button @click="generatMaze2">生成迷宫（造墙法）</button>
+    </div>
 
     <div class="maze-view" @click="onClickMaze">
       <canvas style="z-index: 0" ref="canvas"></canvas>
@@ -23,7 +31,7 @@
 </template>
 
 <script>
-import { solveMaze } from './maze'
+import { solveMaze, MazeGanerator } from './maze'
 import defaultMazeImg from './assets/maze1.png'
 
 async function waitFrame () {
@@ -35,12 +43,16 @@ export default {
     return {
       width: 0,
       height: 0,
+      widthInput: 8,
+      heightInput: 8,
       mode: "1",
       path: [],
       clickPoints: [],
       current: null,
       isExitSolve: false,
-      skipCount: 5000
+      skipCount: 5000,
+      generatSpeed: 1,
+      cellSize: 50
     }
   },
   computed: {
@@ -91,6 +103,55 @@ export default {
         URL.revokeObjectURL(url)
       }
     },
+    async generatMaze1 () {
+      let vm = this
+      let { widthInput, heightInput, cellSize } = this
+      let { canvas, canvasChecked, canvasPath } = this.$refs
+      let generator = new MazeGanerator(widthInput, heightInput, cellSize)
+      generator.build()
+      generator.renderCanvas(canvas)
+
+      this.width = widthInput * generator.cellSize
+      this.height = heightInput * generator.cellSize
+      this.clickPoints = []
+      canvasChecked.getContext('2d').clearRect(0, 0, canvasChecked.width, canvasChecked.height)
+      canvasPath.getContext('2d').clearRect(0, 0, canvasPath.width, canvasPath.height)
+
+      let count = 0
+      await generator.breakWall(async (current) => {
+        count++
+        if (count % vm.generatSpeed === 0) {
+          generator.renderCanvas(canvas, current)
+          return waitFrame()
+        }
+      })
+
+      generator.renderCanvas(canvas)
+    },
+    async generatMaze2 () {
+      let vm = this
+      let { widthInput, heightInput, cellSize } = this
+      let { canvas, canvasChecked, canvasPath } = this.$refs
+      let generator = new MazeGanerator(widthInput, heightInput, cellSize)
+
+      this.width = widthInput * generator.cellSize
+      this.height = heightInput * generator.cellSize
+      this.clickPoints = []
+      canvasChecked.getContext('2d').clearRect(0, 0, canvasChecked.width, canvasChecked.height)
+      canvasPath.getContext('2d').clearRect(0, 0, canvasPath.width, canvasPath.height)
+
+      let count = 0
+      await generator.createWall(async () => {
+        count++
+        if (count % vm.generatSpeed === 0) {
+          generator.renderAreasCanvas(canvas)
+          // return new Promise(r => setTimeout(r, 3000))
+          return waitFrame()
+        }
+      })
+
+      generator.renderAreasCanvas(canvas)
+    },
     onClickMaze ($event) {
       let { clickPoints } = this
       clickPoints.push([$event.offsetX, $event.offsetY])
@@ -102,6 +163,9 @@ export default {
       let vm = this
       let { width, height } = vm
       let { canvas, canvasChecked, canvasPath } = vm.$refs
+
+      canvasPath.width = canvasChecked.width = width
+      canvasPath.height = canvasChecked.height = height
 
       let ctx = canvas.getContext('2d')
       let imgData = ctx.getImageData(0, 0, width, height)
@@ -137,7 +201,7 @@ export default {
     }
   },
   async created () {
-    this.loadImage(defaultMazeImg)
+    // this.loadImage(defaultMazeImg)
   }
 }
 </script>
